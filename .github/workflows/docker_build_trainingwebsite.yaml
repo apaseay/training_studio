@@ -34,11 +34,10 @@ jobs:
         run: |
           echo "${{ secrets.PRIVATE_SSH_KEY }}" > key.pem
           chmod 600 key.pem
-          ls -la
 
       - name: Connect to remote server and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem admin@${{ secrets.VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key.pem ${{ secrets.VM_USERNAME }}@${{ secrets.VM_HOST }} << 'EOF'
             docker pull ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
             docker stop trainingstudio || true
             docker rm trainingstudio || true
