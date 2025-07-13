@@ -25,14 +25,22 @@ jobs:
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
 
-      - name: Deploy to GCP VM via SSH
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.GCP_VM_IP }}
-          username: ${{ secrets.GCP_VM_USER }}
-          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
-          script: |
-            docker pull ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
-            docker stop myapp || true
-            docker rm myapp || true
-            docker run -d -p 80:80 --name myapp ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
+  deployment:
+    runs-on: ubuntu-latest
+    needs:
+      - dockerbuildpush
+    steps:
+      - name: Save SSH private key
+        run: |
+          echo "${{ secrets.PRIVATE_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+          ls -la
+
+      - name: Connect to remote server and deploy container
+        run: |
+          ssh -o StrictHostKeyChecking=no -i key.pem admin_apasecloud_online@${{ secrets.VM_HOST }} "
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest &&
+            docker stop trainingstudio || true &&
+            docker rm trainingstudio || true &&
+            docker run -d --name trainingstudio -p 80:80 ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
+          "
