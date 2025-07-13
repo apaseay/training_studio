@@ -7,21 +7,32 @@ jobs:
   dockerbuildpush:
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Login to Docker Hub
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ vars.DOCKERHUB_USERNAME }} #this should be done in variable
+          username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      -
-        name: Set up QEMU
+
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
-      -
-        name: Set up Docker Buildx
+
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-      -
-        name: Build and push
+
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
           tags: ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
+
+      - name: Deploy to GCP VM via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_VM_USER }}
+          key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
+          script: |
+            docker pull ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
+            docker stop myapp || true
+            docker rm myapp || true
+            docker run -d -p 80:80 --name myapp ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
