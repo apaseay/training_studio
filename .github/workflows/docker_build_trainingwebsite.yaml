@@ -38,7 +38,7 @@ jobs:
 
       - name: Connect to remote server and deploy container
         run: |
-          ssh -o StrictHostKeyChecking=no -i key.pem admin_apasecloud_online@${{ secrets.VM_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i key.pem admin@${{ secrets.VM_HOST }} << 'EOF'
             docker pull ${{ vars.DOCKERHUB_USERNAME }}/trainingstudio:latest
             docker stop trainingstudio || true
             docker rm trainingstudio || true
